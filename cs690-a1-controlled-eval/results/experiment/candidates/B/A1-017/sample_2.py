@@ -1,0 +1,6 @@
+def is_palindrome_normalized(text):
+    filtered = []
+    for char in text:
+        if ('A' <= char <= 'Z') or ('a' <= char <= 'z') or ('0' <= char <= '9'):
+            filtered.append(char.lower())
+    return filtered == filtered[::-1]

@@ -10,9 +10,18 @@ python -m harness.verify
 
 Paste the five `OK` lines here. Keep `results/verification.json` in your repository.
 
+> OK: loaded 20 frozen tasks
+> OK: dataset sha256 5d84176547cb679f4145676d1f4dfd5061bf3b9600904911da8e5700e82eee3b
+> OK: generated Python executed in Docker sandbox
+> OK: candidate network probe was blocked
+> OK: model/configuration metadata written to results/verification.json
+
 ## Part 2. Tests and code questions
 
 Paste the final summary line of `pytest -q` here.
+
+> ....................                                                                                                                              [100%]
+20 passed in 0.97s
 
 Answer each question in your own words, in about 75 to 150 words. Base every answer on the code in this repository, and name the files and functions you describe.
 

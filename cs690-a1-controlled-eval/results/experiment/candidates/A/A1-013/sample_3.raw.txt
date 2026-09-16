@@ -1,0 +1,14 @@
+def top_k_frequent(items, k):
+    frequencies = {}
+    first_seen = {}
+    for index, item in enumerate(items):
+        frequencies[item] = frequencies.get(item, 0) + 1
+        if item not in first_seen:
+            first_seen[item] = index
+    return [
+        item
+        for item, _ in sorted(
+            frequencies.items(),
+            key=lambda pair: (-pair[1], first_seen[pair[0]])
+        )[:k]
+    ]

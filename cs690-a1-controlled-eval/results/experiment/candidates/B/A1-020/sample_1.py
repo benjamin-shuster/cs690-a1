@@ -1,0 +1,22 @@
+def summarize_ranges(nums):
+    if not nums:
+        return []
+
+    result = []
+    start = prev = nums[0]
+
+    for num in nums[1:]:
+        if num != prev + 1:
+            if start == prev:
+                result.append(str(start))
+            else:
+                result.append(f"{start}-{prev}")
+            start = num
+        prev = num
+
+    if start == prev:
+        result.append(str(start))
+    else:
+        result.append(f"{start}-{prev}")
+
+    return result
