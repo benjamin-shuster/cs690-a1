@@ -20,22 +20,73 @@ Paste the five `OK` lines here. Keep `results/verification.json` in your reposit
 
 Paste the final summary line of `pytest -q` here.
 
-> ....................                                                                                                                              [100%]
-20 passed in 0.97s
+> .................... [100%]
+> 20 passed in 0.97s
 
 Answer each question in your own words, in about 75 to 150 words. Base every answer on the code in this repository, and name the files and functions you describe.
 
 ### Q1. The path of one attempt
+> Q1. The path of one attempt. Start from one task in tasks/cs690_eval20.json and describe each step until its result becomes one row in results/experiment/raw_results.jsonl. Name the file and function responsible for each step. Explain why the generated code runs inside the Docker sandbox rather than directly on your computer.
+Selected task: A1-001
+1. The `run` function in `harness/runner.py` is called to start the evaluation.
+2. the `load_tasks` function in `harness/task.py` loads the frozen tasks from `cs690_eval20.json` and instantiates a `Task` object for each task. 
+3. The task is then passed into the prompt template in `harness/runner.py` to create a prompt string.
+4. for each of the runs, the prompt is sent to the model to generate a candidate completion.
+5. `grade_candidate` is called to execute the generated candidate code in a sandbox and evaluate it against the test cases for the task.
+6. The output is saved to the results JSON
+
+The code is run in a container because its not trusted, and to ensure the environment is consistent. This means that if it works on my computer, it should also work on any other computer with docker set up.
 
 ### Q2. What is sent and what comes back
+> Q2. What is sent and what comes back. List the settings every request sends, using conditions.json and harness/provider.py, and say in one sentence what each one controls, using the Week 3 definitions. Then list what the harness keeps from each reply. Explain why the requested model name alone would not identify what answered you.
+
+**below is using the doc string from `harness/provider.py` as a starting point. Hope that is okay.**
+What is sent, for every request:
+* **model**-- the exact model name from conditions.json. For A its gpt-5.6-luna and for B its gpt-5.6-terra
+* **the_prompt** -- the task description, wrapped in the fixed template
+* **temperature**-- how much randomness is allowed when picking tokens. Bother are set to 1.0 for this assignment
+* **top_p**  -- left unset in this assignment. 
+* **reasoning effort**   "none", so the model answers without a hidden reasoning step
+* **max output tokens**  the longest answer we are willing to pay for. 800 for this assignment
+
+What is kept from the reply (the Generation class below):
+* **text**--the answer itself, the part a chat website shows you
+* **returned_model**-- the version string the provider says actually answered
+* **token counts**   the usage you are billed for
+* **stop_reason**-- why the answer ended: finished, or cut off at the limit
+
+What is not kept from the reply:
+* **provider** -- the name of the provider, which is not needed to identify the model version
+* **requested_model**-- the name of the model we asked for, which is not needed to identify the model version
+
+The requested model name alone would not identify what answered you because the provider may have changed the model version since you requested it, and the provider may have used a different model than the one you requested.
 
 ### Q3. Same prompt, different answers
+> Q3. Same prompt, different answers. Both conditions use temperature 1.0 and ask for three attempts per problem. Explain why the three attempts on one problem can differ, and why that is intended in this experiment. Then name the files and fields the harness records so that someone else could rerun your experiment and check your work.
+Models are probabilistic, meaning that they can produce different outputs for the same input prompt. This can be changed by setting the temperature parameter in the model configuration - as discussed in class.
 
 ### Q4. pass@k by hand
-
+> Q4. pass@k by hand. One task had n = 3 attempts, and c = 1 of them was correct. Using the formula on the slide "pass@k, worked through," compute pass@1 and pass@2 by hand and show your work. Confirm both values with pass_at_k. Then compute the shortcut 1 - (1 - c/n) ** k for k = 2, and use the slide "The version people get wrong" to explain why the two answers differ.
 Show your work for pass@1 and pass@2 with n = 3 and c = 1, the values `pass_at_k` returned, and the shortcut `1 - (1 - c/n) ** k` for k = 2.
 
+I had to look up how to get combinations for this - hope thats ok.
+Pass@1:
+comb(2,1) = 2
+comb(3,1) = 3
+pass@1 = 1- 2/3 = 1/3
+
+Pass@2:
+comb(2,2) = 1
+comb(3,2) = 3
+pass@2 = 1 - 1/3 = 2/3
+
+k=2 shortcut:
+1 - (1 - 1/3) ^ 2 = 1 - (2/3) ^ 2 = 1 - 4/9 = 5/9
+
+
 ### Q5. Why whole problems are redrawn
+> Q5. Why whole problems are redrawn. Explain, step by step, what bootstrap_task_ci does. Explain why it draws whole problems instead of individual attempts. Name the test in tests/test_metrics.py that enforces this rule, and explain what that test checks and why it works.
+
 
 ## Part 3. Replication
 
@@ -46,9 +97,9 @@ Part 3 has no written section. Its evidence is the committed `results/experiment
 Take every number from `results/experiment/summary_A.json` and `results/experiment/summary_B.json`, not from the console. Dollars spent come from the Usage page of your OpenAI account. If your account does not show them, write `not available`. If it shows only one total for the whole run, write the total in row A and `included in A` in row B.
 
 | Condition | Requested model | Returned model version | Attempts per task | Total attempts | pass@1 | 95 percent CI for pass@1 | pass@2 | Input tokens | Output tokens | Dollars spent |
-| --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |
-| A | | | 3 | 60 | | | | | | |
-| B | | | 3 | 60 | | | | | | |
+| --------- | --------------- | ---------------------- | ----------------: | -------------: | -----: | ------------------------ | -----: | -----------: | ------------: | ------------- |
+| A         |                 |                        |                 3 |             60 |        |                          |        |              |               |               |
+| B         |                 |                        |                 3 |             60 |        |                          |        |              |               |               |
 
 ### Memo, no more than 500 words, not counting the table
 
