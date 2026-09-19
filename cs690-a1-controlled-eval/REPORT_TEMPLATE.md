@@ -63,7 +63,16 @@ The requested model name alone would not identify what answered you because the 
 
 ### Q3. Same prompt, different answers
 > Q3. Same prompt, different answers. Both conditions use temperature 1.0 and ask for three attempts per problem. Explain why the three attempts on one problem can differ, and why that is intended in this experiment. Then name the files and fields the harness records so that someone else could rerun your experiment and check your work.
-Models are probabilistic, meaning that they can produce different outputs for the same input prompt. This can be changed by setting the temperature parameter in the model configuration - as discussed in class.
+
+Models are probabilistic, meaning that they can produce different outputs for the same input prompt. This can be changed by setting the temperature parameter in the model configuration - as discussed in class. This is intended in this experiment to see how the model performs regardless of the randomness in its output. If it was only run once, we would not know if the model is consistently good or just lucky the one time it ran.
+
+Files and fields recorded by the harness include:
+* `results/experiment/raw_results.jsonl` - contains the prompt, the returned model version, the text of the answer, and the token counts for each attempt.
+* `results/experiment/summary_A.json` and `results/experiment/summary_B.json` - contain the pass@1 and pass@2 values, model, and token counts for each condition.
+* `conditions.json` - contains the requested model, temperature, number of attempts, and other settings for each condition.
+* `cs690-a1-controlled-eval/prompts/a1-controlled-eval-fall2026` has all the generated prompts for each task, so that someone else could rerun the experiment and check the work.
+* `cs690-a1-controlled-eval/results/experiment/candidates` has all the generated candidates for each task, so that someone else could rerun the experiment and check the work.
+* `cs690-a1-controlled-eval/Dockerfile` has the docker configuration for the experiment, so that someone else could rerun the experiment and check the work in the same controlled environment.
 
 ### Q4. pass@k by hand
 > Q4. pass@k by hand. One task had n = 3 attempts, and c = 1 of them was correct. Using the formula on the slide "pass@k, worked through," compute pass@1 and pass@2 by hand and show your work. Confirm both values with pass_at_k. Then compute the shortcut 1 - (1 - c/n) ** k for k = 2, and use the slide "The version people get wrong" to explain why the two answers differ.
@@ -87,6 +96,15 @@ k=2 shortcut:
 ### Q5. Why whole problems are redrawn
 > Q5. Why whole problems are redrawn. Explain, step by step, what bootstrap_task_ci does. Explain why it draws whole problems instead of individual attempts. Name the test in tests/test_metrics.py that enforces this rule, and explain what that test checks and why it works.
 
+`bootstrap_task_ci` builds a confidence interval for the pass@k score by bootstrapping at the task level.
+Steps: 
+1. gets the pass@k score for each task
+2. gets the pass@k score for randomly drawn tasks to create a fake benchmark
+3. uses the fake benchmark to create a confidence interval for the pass@k score
+
+
+The test that enforces this rule is: `test_task_bootstrap_resamples_tasks_not_candidate_rows`
+The test checks that the bootstrap samples entire tasks, not individual candidate attempts. It works because resampling individual attempts would mix the six candidate rows together instead. That would produce scores clustered more closely around the overall 50% success rate, giving a narrower interval.
 
 ## Part 3. Replication
 
@@ -96,11 +114,14 @@ Part 3 has no written section. Its evidence is the committed `results/experiment
 
 Take every number from `results/experiment/summary_A.json` and `results/experiment/summary_B.json`, not from the console. Dollars spent come from the Usage page of your OpenAI account. If your account does not show them, write `not available`. If it shows only one total for the whole run, write the total in row A and `included in A` in row B.
 
-| Condition | Requested model | Returned model version | Attempts per task | Total attempts | pass@1 | 95 percent CI for pass@1 | pass@2 | Input tokens | Output tokens | Dollars spent |
+<!-- | Condition | Requested model | Returned model version | Attempts per task | Total attempts | pass@1 | 95 percent CI for pass@1 | pass@2 | Input tokens | Output tokens | Dollars spent |
 | --------- | --------------- | ---------------------- | ----------------: | -------------: | -----: | ------------------------ | -----: | -----------: | ------------: | ------------- |
 | A         |                 |                        |                 3 |             60 |        |                          |        |              |               |               |
-| B         |                 |                        |                 3 |             60 |        |                          |        |              |               |               |
-
+| B         |                 |                        |                 3 |             60 |        |                          |        |              |               |               | -->
+| Condition | Requested model | Returned model version | Attempts per task | Total attempts | pass@1 | 95 percent CI for pass@1 | pass@2             | Input tokens | Output tokens | Dollars spent |
+| --------- | --------------- | ---------------------- | ----------------: | -------------: | -----: | ------------------------ | -----------------: | -----------: | ------------: | ------------- |
+| A         | gpt-5.6-luna    | gpt-5.6-luna           | 3                 | 60             | 0.95   | 0.8666666666666666       | 0.9833333333333334 | 7146         | 3829          | 0.006024      |
+| B         | gpt-5.6-terra   | gpt-5.6-terra          | 3                 | 60             | 1.0    | 1.0                      | 1.0                | 7146         | 4081          | 0.063264      |
 ### Memo, no more than 500 words, not counting the table
 
 Address all five items:
